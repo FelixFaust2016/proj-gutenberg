@@ -11,7 +11,7 @@ import {
 import { Fragment, useEffect, useState } from "react";
 
 import app from "../../firebase-config";
-import { getDatabase, ref, get, remove } from "firebase/database";
+import { getDatabase, ref, get } from "firebase/database";
 
 export const SavedBooks = () => {
   const navigate = useNavigate();
@@ -19,7 +19,6 @@ export const SavedBooks = () => {
   const [savedItems, setSavedItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     setSearchTerm(e.target.value);
@@ -34,7 +33,6 @@ export const SavedBooks = () => {
       setSavedItems(Object.values(snapshot.val()));
     } else {
       setSavedItems([])
-      setError("error");
     }
     setIsLoading(false);
   };

@@ -17,8 +17,6 @@ import {
 import app from "../../firebase-config";
 import { getDatabase, ref, set, push, get } from "firebase/database";
 import { useNavigate } from "react-router-dom";
-import { getMiddleWords } from "../../utils/middlewords";
-import axios from "axios";
 
 export const BookLookup = () => {
   const [metadata, setMetadata] = useState("");
@@ -29,7 +27,6 @@ export const BookLookup = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [savedBooks, setSaved] = useState([]);
   const [bookText, setBookText] = useState("");
-  const [language, setLanguage] = useState("");
 
   const navigate = useNavigate();
 
@@ -46,28 +43,6 @@ export const BookLookup = () => {
     setIsLoading(false);
   };
 
-  const languageDetect = async () => {
-    // setLoading(true);
-    const bookLimit = getMiddleWords(bookText);
-    try {
-      const response = await axios.post(
-        "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection",
-        { inputs: bookLimit },
-        {
-          headers: {
-            Authorization: `Bearer ${
-              import.meta.env.VITE_REACT_OPENAI_SECRET_KEY
-            }`,
-          },
-        }
-      );
-      setLanguage(response.data[0][0].label);
-    } catch (error) {
-      console.error("Error generating summary:", error);
-      setLanguage("error.");
-    }
-    // setLoading(false);
-  };
 
   useEffect(() => {
     fetchCollection();
@@ -87,7 +62,6 @@ export const BookLookup = () => {
       ...metadata,
       bookText: bookText,
       bookId: bookId,
-      language: language,
     })
       .then(() => {
         setIsSaved(true);
@@ -100,12 +74,6 @@ export const BookLookup = () => {
         navigate("/")
       });
   };
-
-  useEffect(() => {
-    if (language) {
-      saveData();
-    }
-  }, [language]);
 
   const handleSetBookId = (e) => {
     setBookId(e.target.value);
@@ -174,8 +142,6 @@ export const BookLookup = () => {
     }
     setIsLoading(false);
   };
-
-  console.log(error);
 
   const fetchData = (e) => {
     e.preventDefault();
@@ -248,7 +214,7 @@ export const BookLookup = () => {
               </p>
               <div className="flex gap-3 mt-7">
                 <Button
-                  onClick={languageDetect}
+                  onClick={saveData}
                   btnText={
                     isSaving ? "Saving..." : isSaved ? "Saved" : "Save Book"
                   }
@@ -262,7 +228,6 @@ export const BookLookup = () => {
                         author: metadata.author,
                         title: metadata.title,
                         bookText: bookText,
-                        language: language,
                       },
                     })
                   }

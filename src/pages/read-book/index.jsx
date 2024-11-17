@@ -1,18 +1,44 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button, Header } from "../../components";
 import { backButtonIcon } from "../../assets";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getMiddleWords } from "../../utils/middlewords";
+import axios from "axios";
 
 export const ReadBook = () => {
   const { state } = useLocation();
 
   const navigate = useNavigate();
+  const [language, setLanguage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!state) {
       navigate(-1);
     }
   }, []);
+
+  const languageDetect = async () => {
+    setLoading(true);
+    const bookLimit = getMiddleWords(state.bookText);
+    try {
+      const response = await axios.post(
+        "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection",
+        { inputs: bookLimit },
+        {
+          headers: {
+            Authorization: `Bearer ${
+              import.meta.env.VITE_REACT_OPENAI_SECRET_KEY
+            }`,
+          },
+        }
+      );
+      setLanguage(response.data[0][0].label);
+    } catch (error) {
+      alert("There was an error from the server. PLEASE TRY AGAIN!!");
+    }
+    setLoading(false);
+  };
 
   return (
     <>
@@ -26,10 +52,15 @@ export const ReadBook = () => {
           <p className="text-xl md:2xl font-bold">{state?.title}</p> by{" "}
           {state?.author}
           <div className="flex-1"></div>
-          {state.language && (
+          {language ? (
             <p>
-              <strong>Language:</strong> {state.language.toUpperCase()}
+              <strong>Language:</strong> {language?.toLocaleUpperCase()}
             </p>
+          ) : (
+            <Button
+              btnText={loading ? "Detecting..." : "Language Detect"}
+              onClick={languageDetect}
+            />
           )}
         </div>
       </Header>
